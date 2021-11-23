@@ -1,0 +1,49 @@
+#@ load("@ytt:overlay", "overlay")
+#@overlay/match by=overlay.subset({"kind":"ConfigMap", "metadata": {"name": "fluent-bit-config"}})
+---
+data:
+  #@overlay/replace via=lambda a, b: a + b
+  filter-record.conf: |
+
+    [FILTER]
+        Name    lua
+        Match   kube.*
+        script  /fluent-bit/scripts/filter.lua
+        call    cb_filter
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-scripts
+  namespace: tanzu-system-logging
+  labels:
+    k8s-app: fluent-bit
+data:
+  filter.lua: |
+    function cb_filter(tag, timestamp, record)
+       if record['kubernetes'] == nil then
+         return -1, timestamp, record
+       end
+       local namespace = record['kubernetes']['namespace_name']
+       local container = record['kubernetes']['container_name']
+       if (string.sub(namespace, 1, 4) ~= 'sock') and (container ~= 'envoy') then
+         return -1, timestamp, record
+       end
+    end
+#@overlay/match by=overlay.subset({"kind":"DaemonSet", "metadata": {"name": "fluent-bit"}})
+---
+spec:
+  template:
+    spec:
+      containers:
+      #@overlay/match by="name"
+      - name: fluent-bit
+        volumeMounts:
+        #@overlay/match by="name", missing_ok=True
+        - name: fluent-bit-scripts
+          mountPath: /fluent-bit/scripts/
+      volumes:
+      #@overlay/match by="name", missing_ok=True
+      - name: fluent-bit-scripts
+        configMap:
+          name: fluent-bit-scripts

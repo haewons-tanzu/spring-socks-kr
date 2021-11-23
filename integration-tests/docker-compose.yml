@@ -1,0 +1,174 @@
+version: "2"
+services:
+  sock-user:
+    image: ghcr.io/making/spring-socks-user:latest
+    ports:
+    - 15006:5006
+    mem_limit: 256m
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      LOGGING_LEVEL_LOL_MAKI_SOCKS: DEBUG
+      SERVER_TOMCAT_THREADS_MAX: 4
+      JAVA_TOOL_OPTIONS: -XX:ReservedCodeCacheSize=32M -Xss512k -Duser.timezone=Asia/Tokyo
+      BPL_JVM_THREAD_COUNT: 20
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sock_user
+      SPRING_ZIPKIN_ENABLED: "true"
+      SPRING_ZIPKIN_BASE_URL: http://zipkin:9411
+      SOCK_HOMEURL: http://localhost:8080
+      SOCK_ISSUERURL: http://sock-user:5006/oauth/token
+    depends_on:
+    - mysql
+    - zipkin
+  sock-catalog:
+    image: ghcr.io/making/spring-socks-catalog:latest
+    ports:
+    - 15001:5001
+    mem_limit: 256m
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      LOGGING_LEVEL_LOL_MAKI_SOCKS: DEBUG
+      SERVER_TOMCAT_THREADS_MAX: 4
+      JAVA_TOOL_OPTIONS: -XX:ReservedCodeCacheSize=32M -Xss512k -Duser.timezone=Asia/Tokyo
+      BPL_JVM_THREAD_COUNT: 20
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sock_catalog
+      SPRING_ZIPKIN_ENABLED: "true"
+      SPRING_ZIPKIN_BASE_URL: http://zipkin:9411
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUERURI: http://sock-user:5006/oauth/token
+    depends_on:
+    - mysql
+    - zipkin
+    - sock-user
+  sock-cart:
+    image: ghcr.io/making/spring-socks-cart:latest
+    ports:
+    - 15005:5005
+    mem_limit: 256m
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      LOGGING_LEVEL_LOL_MAKI_SOCKS: DEBUG
+      SERVER_TOMCAT_THREADS_MAX: 4
+      JAVA_TOOL_OPTIONS: -XX:ReservedCodeCacheSize=32M -Xss512k -Duser.timezone=Asia/Tokyo
+      BPL_JVM_THREAD_COUNT: 20
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sock_cart
+      SPRING_ZIPKIN_ENABLED: "true"
+      SPRING_ZIPKIN_BASE_URL: http://zipkin:9411
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUERURI: http://sock-user:5006/oauth/token
+    depends_on:
+    - mysql
+    - zipkin
+    - sock-user
+  sock-order:
+    image: ghcr.io/making/spring-socks-order:latest
+    ports:
+    - 15004:5004
+    mem_limit: 256m
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      LOGGING_LEVEL_LOL_MAKI_SOCKS: DEBUG
+      SERVER_TOMCAT_THREADS_MAX: 4
+      JAVA_TOOL_OPTIONS: -XX:ReservedCodeCacheSize=32M -Xss512k -Duser.timezone=Asia/Tokyo
+      BPL_JVM_THREAD_COUNT: 20
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sock_order
+      SPRING_ZIPKIN_ENABLED: "true"
+      SPRING_ZIPKIN_BASE_URL: http://zipkin:9411
+      SOCK_CARTURL: http://sock-cart:5005
+      SOCK_PAYMENTURL: http://sock-payment:5002
+      SOCK_SHIPPINGURL: http://sock-shipping:5003
+      SOCK_USERURL: http://sock-user:5006
+      SPRING_APPLICATION_JSON: |
+        {
+          "simple.dns.ports[sock-cart].http": 5005,
+          "simple.dns.ports[sock-payment].http": 5002,
+          "simple.dns.ports[sock-shipping].http": 5003
+        }
+    depends_on:
+    - mysql
+    - zipkin
+    - sock-user
+  sock-payment:
+    image: ghcr.io/making/spring-socks-payment:latest
+    ports:
+    - 15002:5002
+    mem_limit: 256m
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      LOGGING_LEVEL_LOL_MAKI_SOCKS: DEBUG
+      SERVER_TOMCAT_THREADS_MAX: 4
+      JAVA_TOOL_OPTIONS: -XX:ReservedCodeCacheSize=32M -Xss512k -Duser.timezone=Asia/Tokyo
+      BPL_JVM_THREAD_COUNT: 20
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sock_payment
+      SPRING_ZIPKIN_ENABLED: "true"
+      SPRING_ZIPKIN_BASE_URL: http://zipkin:9411
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUERURI: http://sock-user:5006/oauth/token
+    depends_on:
+    - mysql
+    - zipkin
+    - sock-user
+  sock-shipping:
+    image: ghcr.io/making/spring-socks-shipping:latest
+    ports:
+    - 15003:5003
+    mem_limit: 256m
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      LOGGING_LEVEL_LOL_MAKI_SOCKS: DEBUG
+      SERVER_TOMCAT_THREADS_MAX: 4
+      JAVA_TOOL_OPTIONS: -XX:ReservedCodeCacheSize=32M -Xss512k -Duser.timezone=Asia/Tokyo
+      BPL_JVM_THREAD_COUNT: 20
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sock_shipping
+      SPRING_ZIPKIN_ENABLED: "true"
+      SPRING_ZIPKIN_BASE_URL: http://zipkin:9411
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUERURI: http://sock-user:5006/oauth/token
+    depends_on:
+    - mysql
+    - zipkin
+    - sock-user
+  shop-ui:
+    image: ghcr.io/making/spring-socks-ui:latest
+    ports:
+    - 8080:6060
+    mem_limit: 256m
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      LOGGING_LEVEL_LOL_MAKI_SOCKS: DEBUG
+      JAVA_TOOL_OPTIONS: -XX:ReservedCodeCacheSize=32M -Xss512k -Duser.timezone=Asia/Tokyo
+      BPL_JVM_THREAD_COUNT: 20
+      SPRING_ZIPKIN_ENABLED: "true"
+      SPRING_ZIPKIN_BASE_URL: http://zipkin:9411
+      SOCK_CATALOGURL: http://sock-catalog:5001
+      SOCK_CARTURL: http://sock-cart:5005
+      SOCK_ORDERURL: http://sock-order:5004
+      SOCK_PAYMENTURL: http://sock-payment:5002
+      SOCK_SHIPPINGURL: http://sock-shipping:5003
+      SOCK_USERURL: http://sock-user:5006
+      SPRING_APPLICATION_JSON: |
+        {
+          "simple.dns.ports[sock-catalog].http": 5001,
+          "simple.dns.ports[sock-cart].http": 5005,
+          "simple.dns.ports[sock-order].http": 5004,
+          "simple.dns.ports[sock-payment].http": 5002,
+          "simple.dns.ports[sock-shipping].http": 5003
+        }
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_UI_AUTHORIZATIONURI: http://localhost:15006/oauth/authorize
+    depends_on:
+    - zipkin
+    - sock-user
+  mysql:
+    image: ghcr.io/making/mysql:8
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+    - ./mysql:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_USER: root
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+  zipkin:
+    image: ghcr.io/openzipkin/zipkin-slim
+    ports:
+    - 9411:9411

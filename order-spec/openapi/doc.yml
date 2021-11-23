@@ -1,0 +1,195 @@
+servers:
+  - description: Local
+    url: 'http://localhost:5004'
+  - description: PCF One
+    url: 'https://sock-order.apps.pcfone.io'
+  - url: 'https://sock-order.apps.cf.maki.lol'
+    description: CF for K8s
+components:
+  schemas:
+    OrderRequest:
+      type: object
+      x-tags:
+        - Order
+      x-examples:
+        example-1: {}
+      properties:
+        addressId:
+          type: string
+          format: uuid
+        cardId:
+          type: string
+          format: uuid
+    OrderResponseCustomer:
+      type: object
+      x-tags:
+        - Order
+      properties:
+        id:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        username:
+          type: string
+    OrderResponseAddress:
+      type: object
+      x-tags:
+        - Order
+      properties:
+        number:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        postcode:
+          type: string
+        country:
+          type: string
+    OrderResponseCard:
+      type: object
+      x-tags:
+        - Order
+      properties:
+        longNum:
+          type: string
+        expires:
+          type: string
+          format: date
+        ccv:
+          type: string
+    OrderResponseShipment:
+      type: object
+      x-tags:
+        - Order
+      properties:
+        carrier:
+          type: string
+        trackingNumber:
+          type: string
+          format: uuid
+        deliveryDate:
+          type: string
+          format: date
+    OrderResponseItem:
+      type: object
+      x-tags:
+        - Order
+      properties:
+        itemId:
+          type: string
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+    OrderResponse:
+      type: object
+      x-tags:
+        - Order
+      properties:
+        id:
+          type: string
+        customer:
+          $ref: '#/components/schemas/OrderResponseCustomer'
+        address:
+          $ref: '#/components/schemas/OrderResponseAddress'
+        card:
+          $ref: '#/components/schemas/OrderResponseCard'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderResponseItem'
+        shipment:
+          $ref: '#/components/schemas/OrderResponseShipment'
+        date:
+          type: string
+          format: date-time
+        total:
+          type: number
+        status:
+          type: string
+          enum:
+            - CREATED
+            - PAID
+            - SHIPPED
+            - PAYMENT_FAILED
+            - SHIPMENT_FAILED
+info:
+  description: Order API
+  license:
+    name: Apachie 2.0
+  title: 'Spring Sock Shop: Order API'
+  version: 0.1.0-SNAPSHOT
+openapi: 3.0.1
+paths:
+  /orders:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+        '406':
+          description: Not Acceptable
+      summary: Place a new order
+      operationId: create-order
+      parameters: []
+      tags:
+        - Order
+    get:
+      parameters:
+        - in: query
+          name: customerId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderResponse'
+        '404':
+          description: Not Found
+      summary: Search orders by customer ID
+      operationId: get-orders-by-customer-id
+      tags:
+        - Order
+  '/orders/{id}':
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Return an order
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        '404':
+          description: Not Found
+      operationId: get-order
+      tags:
+        - Order

@@ -1,0 +1,199 @@
+servers:
+  - description: Local
+    url: 'http://localhost:5005'
+  - url: 'https://sock-cart.apps.pcfone.io'
+    description: PCF One
+  - url: 'https://sock-cart.apps.cf.maki.lol'
+    description: CF for K8s
+components:
+  schemas:
+    CartResponse:
+      title: CartResponse
+      type: object
+      properties:
+        customerId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItemResponse'
+      x-tags:
+        - Cart
+    CartItemResponse:
+      title: CartItemResponse
+      type: object
+      properties:
+        itemId:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        unitPrice:
+          type: number
+      x-tags:
+        - Cart
+    CartItemRequest:
+      title: CartItemRequest
+      type: object
+      properties:
+        itemId:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        unitPrice:
+          type: number
+      x-tags:
+        - Cart
+info:
+  contact: {}
+  description: Cart API
+  license:
+    name: Apache 2.0
+  title: 'Spring Sock Shop: Cart API'
+  version: 0.1.0-SNAPSHOT
+openapi: 3.0.1
+paths:
+  '/carts/{customerId}':
+    parameters:
+      - schema:
+          type: string
+        name: customerId
+        in: path
+        required: true
+    get:
+      summary: Get a cart
+      tags:
+        - Cart
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+      operationId: get-cart-by-customerId
+      description: Get a cart for the requested customer id
+    delete:
+      summary: Delete a cart
+      operationId: delete-cart-by-customerId
+      responses:
+        '202':
+          description: Accepted
+      description: Delete a cart for the requested customer id
+      tags:
+        - Cart
+  '/carts/{customerId}/items':
+    parameters:
+      - schema:
+          type: string
+        name: customerId
+        in: path
+        required: true
+    get:
+      summary: Get cart items
+      tags:
+        - Cart
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CartItemResponse'
+      operationId: get-items-by-customerId
+      description: Get cart items for the requested customer id
+    post:
+      summary: Add a cart item
+      operationId: post-items-by-customerId
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItemResponse'
+        '400':
+          description: Bad Request
+      description: Add a cart item for the requested customer id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemRequest'
+      tags:
+        - Cart
+    patch:
+      summary: Update a cart item
+      operationId: patch-items-by-customerId
+      responses:
+        '202':
+          description: Accepted
+        '400':
+          description: Bad Request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemRequest'
+      description: Update a cart item for the requested customer id
+      tags:
+        - Cart
+  '/carts/{customerId}/items/{itemId}':
+    parameters:
+      - schema:
+          type: string
+        name: customerId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: itemId
+        in: path
+        required: true
+    get:
+      summary: Get a cart item
+      tags:
+        - Cart
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItemResponse'
+      operationId: get-cartItem-by-cartId-and-ItemId
+      description: Get a cart item for the requested customer id and item id
+    delete:
+      summary: Delete a cart item
+      operationId: delete-cartItem-by-cartId-and-ItemId
+      responses:
+        '202':
+          description: Accepted
+      description: Delete a cart item for the requested customer id and item id
+      tags:
+        - Cart
+  '/carts/{customerId}/merge':
+    parameters:
+      - schema:
+          type: string
+        name: customerId
+        in: path
+        required: true
+    get:
+      summary: Merge carts
+      tags:
+        - Cart
+      responses:
+        '202':
+          description: Accepted
+      operationId: merge-carts-by-customerId
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: sessionId
+          required: true
+      description: Merge carts on the database and on the session for the requested customer id.

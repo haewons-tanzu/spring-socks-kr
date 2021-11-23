@@ -1,0 +1,51 @@
+applications:
+- name: sock-user
+  path: target/user-api-1.0.0-SPRING_ONE.jar
+  memory: 384m
+  health-check-type: http
+  health-check-http-endpoint: /actuator/health/readiness
+  timeout: 180
+  services:
+  - spring-socks # cf create-user-provided-service spring-socks -p "{\"url\":\"https://spring-socks.cfapps.io\"}"
+  - user-db # cf create-service p.mysql db-small user-db
+  - user-redis
+  - prometheus-rsocket-proxy # cf create-user-provided-service prometheus-rsocket-proxy -p '{"host": "rsocket.example.com", "port": 7001}'
+  - zipkin # cf create-user-provided-service zipkin -p '{"url": "https://zipkin.example.com"}'
+  - wavefront # cf create-user-provided-service wavefront -p '{"api-token": "****"}'
+  env:
+    SOCK_HOMEURL: ${vcap.services.spring-socks.credentials.url}
+    SERVER_PORT: 8080
+    JBP_CONFIG_SPRING_AUTO_RECONFIGURATION: '{enabled: false}'
+    SPRING_PROFILES_ACTIVE: redis
+    SERVER_TOMCAT_THREADS_MAX: 4
+    JAVA_OPTS: -XX:ReservedCodeCacheSize=32M -Xss512k -Duser.timezone=Asia/Tokyo
+    JBP_CONFIG_OPEN_JDK_JRE: '{memory_calculator: {stack_threads: 20}, jre: {version: 11.+}}'
+    BPL_JVM_THREAD_COUNT: 20
+    INFO_JAVA_VERSION: ${java.runtime.version}
+    INFO_JAVA_VENDOR: ${java.vm.vendor}
+    SPRING_ZIPKIN_ENABLED: true
+    SPRING_ZIPKIN_BASE_URL: ${vcap.services.zipkin.credentials.url}
+    SPRING_ZIPKIN_SERVICE_NAME: ${management.metrics.tags.space}:${spring.application.name}
+    SPRING_SLEUTH_REDIS_REMOTESERVICENAME: ${spring.zipkin.service.name}-redis
+    SPRING_SLEUTH_WEB_ADDITIONALSKIPPATTERN: /actuator.*|/cloudfoundryapplication.*
+    MANAGEMENT_METRICS_TAGS_ORGANIZATION: ${vcap.application.organization_name}
+    MANAGEMENT_METRICS_TAGS_SPACE: ${vcap.application.space_name}
+    MANAGEMENT_METRICS_TAGS_APPLICATION: ${vcap.application.application_name}
+    MANAGEMENT_METRICS_TAGS_INSTANCE_ID: ${management.metrics.tags.application}:${vcap.application.instance_index}
+    MANAGEMENT_METRICS_EXPORT_PROMETHEUS_RSOCKET_HOST: ${vcap.services.prometheus-rsocket-proxy.credentials.host}
+    MANAGEMENT_METRICS_EXPORT_PROMETHEUS_RSOCKET_PORT: ${vcap.services.prometheus-rsocket-proxy.credentials.port}
+    MANAGEMENT_METRICS_EXPORT_WAVEFRONT_ENABLED: false
+    MANAGEMENT_METRICS_EXPORT_WAVEFRONT_APITOKEN: ${vcap.services.wavefront.credentials.api-token}
+    MANAGEMENT_METRICS_EXPORT_WAVEFRONT_SOURCE: ${vcap.application.organization_name}:${vcap.application.space_name}:${vcap.application.application_name}:${vcap.application.instance_index}
+    WAVEFRONT_APPLICATION_CLUSTER: ${vcap.application.organization_name}
+    WAVEFRONT_APPLICATION_NAME: ${vcap.application.space_name}
+    WAVEFRONT_APPLICATION_SERVICE: ${vcap.application.application_name}
+    WAVEFRONT_APPLICATION_SHARD: ${vcap.application.instance_index}
+    LOGGING_EXCEPTIONCONVERSIONWORD: "\t%replace(%replace(%xEx){'\n','\r'}){'\t','    '}%nopex"
+    LOGGING_PATTERN_CONSOLE: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${logging.pattern.level:%5p}) %clr(${PID: }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %replace(%m){'\n','\r'}${logging.exception-conversion-word:%wEx}%n"
+    LOGGING_LEVEL_IO_PIVOTAL_CFENV: DEBUG
+  metadata:
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8080"
+      prometheus.io/path: "/actuator/prometheus"

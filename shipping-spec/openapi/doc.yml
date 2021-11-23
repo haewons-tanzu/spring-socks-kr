@@ -1,0 +1,108 @@
+servers:
+  - description: Local
+    url: 'http://localhost:5003'
+  - description: PCF One
+    url: 'https://sock-shipping.apps.pcfone.io'
+  - url: 'https://sock-shipping.apps.cf.maki.lol'
+    description: CF for K8s
+components:
+  schemas:
+    ShipmentResponse:
+      description: Shipment information
+      type: object
+      x-tags:
+        - Shipment
+      properties:
+        carrier:
+          description: Shipping carrier
+          type: string
+        deliveryDate:
+          description: Estimated delivery date
+          format: date
+          type: string
+        orderId:
+          description: Order ID
+          type: string
+        trackingNumber:
+          type: string
+          description: tracking number
+          format: uuid
+    ShipmentRequest:
+      description: Shipment request
+      type: object
+      x-tags:
+        - Shipment
+      properties:
+        orderId:
+          description: Order ID
+          type: string
+        itemCount:
+          type: integer
+          format: int32
+info:
+  contact: {}
+  description: Shipping API
+  license:
+    name: Apache 2.0
+  title: 'Spring Sock Shop: Shipping API'
+  version: 0.1.0-SNAPSHOT
+openapi: 3.0.1
+paths:
+  /shipping:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShipmentRequest'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipmentResponse'
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+      summary: Ship a shipping request
+      operationId: post-shipping
+      tags:
+        - Shipment
+    get:
+      summary: Get all shipments
+      operationId: get-shippings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShipmentResponse'
+      tags:
+        - Shipment
+  '/shipping/{orderId}':
+    get:
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShipmentResponse'
+          description: OK
+        '404':
+          description: Not Found
+      summary: Return a shipment
+      operationId: get-shipping-by-id
+      tags:
+        - Shipment

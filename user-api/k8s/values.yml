@@ -1,0 +1,14 @@
+#@data/values
+---
+mysql_hostname: sock-user-mysql.sock-user.svc.cluster.local
+mysql_port: "3306"
+mysql_username: sockshop
+mysql_password: sockshop
+mysql_database: user-db
+sock_ui_external_url: http://spring-socks.example.com
+sock_user_external_url: http://sock-user.example.com
+sock_issuer_url:
+cluster_issuer_name: letsencrypt
+wavefront_uri: https://try.wavefront.com/
+wavefront_api_token: efee3e2d-509f-4841-811c-c09613c0a048
+wavefront_application_name: spring-socks
